@@ -29,9 +29,9 @@ export function PromptColumn({ scope, title }: Props) {
     <div className="bg-surface p-[10px] text-text w-[300px] flex flex-col gap-[8px] shrink-0">
       <div className="flex items-center text-sm gap-[4px] font-semibold">
         <span>{title}</span>
-        {!atLive && (
+        {history.entries.length > 0 && (
           <span className="text-xs opacity-60 font-mono">
-            {history.cursor + 1}/{history.entries.length}
+            {atLive ? history.entries.length : `${history.cursor + 1}/${history.entries.length}`}
           </span>
         )}
         <div className="flex-1" />
