@@ -56,4 +56,4 @@ On first launch the app creates `%APPDATA%\falPipe\` (Windows) or the equivalent
 
 ## License
 
-No license chosen yet — treat as all-rights-reserved until one is added.
+AGPL v3.0
