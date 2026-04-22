@@ -8,6 +8,9 @@ Built with React + Tailwind (frontend) on a Rust + Tauri (native) host. Windows 
 
 ENTIRELY VIBE CODED SO GOOD LUCK EVERYBODY!
 
+<img src="https://github.com/user-attachments/assets/5b379440-2698-49a5-9b87-f5cc910c9421" width="1829" alt="falPipe />
+
+
 ## Features
 
 - **Model library driven by JSON** — drop a file in `models/` and the app picks it up. Ships with FLUX, Nano Banana 2 / Pro, Veo3, Kling 3 (image + video), and Topaz Upscale.
