@@ -1,6 +1,8 @@
 # falPipe
 
-A desktop GUI for [fal.ai](https://fal.ai) built around a **project / sequence / shot** file layout — meant for iterating on generative image & video shots as part of a larger production pipeline, not for one-off prompting.
+A desktop GUI for [fal.ai](https://fal.ai) built around a **project / sequence / shot** file layout — meant for iterating on generative image & video shots as part of a larger production pipeline at speed while saving all media to disk.
+
+This tool was designed as an antidote to overcomplicated node graphs which in many cases end up quite linear regardless. Complexity is not a flex.
 
 Built with React + Tailwind (frontend) on a Rust + Tauri (native) host. Windows is the primary target; macOS and Linux should build from source.
 
