@@ -163,6 +163,7 @@ export type AppState = {
   refImages: RefImage[];
   iterations: number;
   galleryHeight: number;
+  thumbColWidth: number;
 };
 
 export type SequenceSidecar = {

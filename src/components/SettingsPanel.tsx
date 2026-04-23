@@ -139,7 +139,7 @@ function FloatControl({
 }
 
 function BoolControl({
-  param: _param,
+  param,
   value,
   onChange,
 }: {
@@ -147,12 +147,16 @@ function BoolControl({
   value: boolean;
   onChange: (v: unknown) => void;
 }) {
+  const text = param.name.replace(/_/g, " ");
   return (
-    <input
-      type="checkbox"
-      checked={value}
-      onChange={(e) => onChange(e.currentTarget.checked)}
-      className="accent-accent"
-    />
+    <label className="flex items-center gap-[6px] text-xs text-text cursor-pointer select-none">
+      <input
+        type="checkbox"
+        checked={value}
+        onChange={(e) => onChange(e.currentTarget.checked)}
+        className="accent-accent"
+      />
+      <span>{text}</span>
+    </label>
   );
 }

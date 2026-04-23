@@ -3,6 +3,7 @@ import type { GalleryImage } from "../lib/types";
 import { GalleryColumn, type ImageAction } from "./GalleryColumn";
 import { ImageZoomModal } from "./ImageZoomModal";
 import { IconBtn } from "./IconBtn";
+import { ResizeBar } from "./ResizeBar";
 import { useSessionStore } from "../stores/sessionStore";
 import {
   addImageToRefs,
@@ -15,7 +16,7 @@ import { confirmAction, showMessage } from "../lib/dialog";
 
 export function Gallery() {
   const session = useSessionStore();
-  const { columns, traceActive } = session;
+  const { columns, traceActive, thumbColWidth, setThumbColWidth } = session;
   const [zoomPath, setZoomPath] = useState<string | null>(null);
 
   const flatImages = columns.flatMap((c) => c.images);
@@ -132,14 +133,23 @@ export function Gallery() {
         {columns.length === 0 ? (
           <div className="text-sm text-dim p-4">Open a shot to see its versions.</div>
         ) : (
-          columns.map((c) => (
-            <GalleryColumn
-              key={c.version}
-              column={c}
-              onFolderDelete={() => onFolderDelete(c.version)}
-              onImageAction={onImageAction}
+          <>
+            {columns.map((c) => (
+              <GalleryColumn
+                key={c.version}
+                column={c}
+                width={thumbColWidth}
+                onFolderDelete={() => onFolderDelete(c.version)}
+                onImageAction={onImageAction}
+              />
+            ))}
+            <ResizeBar
+              orientation="vertical"
+              value={thumbColWidth}
+              onChange={setThumbColWidth}
+              grow="right"
             />
-          ))
+          </>
         )}
       </div>
       {session.shotPath && (

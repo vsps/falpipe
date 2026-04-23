@@ -72,6 +72,14 @@ textarea {
   resize: vertical;
 }
 
+@keyframes splash-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.92; }
+}
+.splash-logo {
+  animation: splash-pulse 3s ease-in-out infinite;
+}
+
 .thin-scroll::-webkit-scrollbar {
   width: 6px;
   height: 6px;

@@ -4,11 +4,14 @@ import { SessionBar } from "./components/SessionBar";
 import { ModelSettingsColumn } from "./components/ModelSettingsColumn";
 import { PromptColumn } from "./components/PromptColumn";
 import { RefImagesColumn } from "./components/RefImagesColumn";
+import { LatestImageColumn } from "./components/LatestImageColumn";
 import { RunColumn } from "./components/RunColumn";
 import { Gallery } from "./components/Gallery";
 import { ErrorPopup } from "./components/ErrorPopup";
 import { LogWindow } from "./components/LogWindow";
 import { SettingsDialog } from "./components/SettingsDialog";
+import { SplashScreen } from "./components/SplashScreen";
+import { ResizeBar } from "./components/ResizeBar";
 import { useGenerationStore } from "./stores/generationStore";
 import { useModelsStore } from "./stores/modelsStore";
 import { useSessionStore } from "./stores/sessionStore";
@@ -19,6 +22,8 @@ export default function App() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const traceActive = useSessionStore((s) => s.traceActive);
   const setTrace = useSessionStore((s) => s.setTrace);
+  const galleryHeight = useSessionStore((s) => s.galleryHeight);
+  const setGalleryHeight = useSessionStore((s) => s.setGalleryHeight);
 
   useEffect(() => {
     let dispose: (() => void) | null = null;
@@ -56,15 +61,29 @@ export default function App() {
         <PromptColumn scope="sequence" title="SEQUENCE PROMPT" />
         <PromptColumn scope="shot" title="SHOT PROMPT" />
         <RefImagesColumn />
+        <LatestImageColumn />
         <RunColumn />
       </div>
 
-      <Gallery />
+      <ResizeBar
+        orientation="horizontal"
+        value={galleryHeight}
+        onChange={setGalleryHeight}
+        grow="up"
+      />
+
+      <div
+        className="shrink-0 flex min-h-0"
+        style={{ height: `${galleryHeight}px` }}
+      >
+        <Gallery />
+      </div>
 
       <LogWindow />
       <StatusBar ready={ready} bootError={bootError} />
       <ErrorPopup />
       {settingsOpen && <SettingsDialog onClose={() => setSettingsOpen(false)} />}
+      <SplashScreen ready={ready} />
     </div>
   );
 }

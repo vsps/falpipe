@@ -133,7 +133,7 @@ export function RefImagesColumn({ onZoom }: { onZoom?: (path: string) => void })
     <>
       <div
         ref={panelRef}
-        className={`bg-surface p-[10px] text-text flex-1 min-w-[260px] max-w-[560px] flex flex-col gap-[8px] shrink-0 transition-colors ${
+        className={`bg-surface p-[10px] text-text w-[381px] flex flex-col gap-[8px] shrink-0 transition-colors ${
           dragOver ? "outline outline-2 outline-accent" : ""
         }`}
       >

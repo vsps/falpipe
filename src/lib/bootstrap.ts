@@ -18,6 +18,7 @@ function emptyAppState(): AppState {
     refImages: [],
     iterations: 1,
     galleryHeight: 400,
+    thumbColWidth: 180,
   };
 }
 
@@ -34,7 +35,8 @@ function currentAppState(): AppState {
     settings: g.settings,
     refImages: g.refImages,
     iterations: g.iterations,
-    galleryHeight: 400,
+    galleryHeight: s.galleryHeight,
+    thumbColWidth: s.thumbColWidth,
   };
 }
 
@@ -72,6 +74,14 @@ export async function bootstrap(): Promise<() => void> {
   gen.setShotPrompt(appState.shotPrompt ?? "");
   gen.setIterations(appState.iterations ?? 1);
   useGenerationStore.setState({ refImages: appState.refImages ?? [] });
+
+  // Restore UI layout prefs (clamped by store setters).
+  if (typeof appState.galleryHeight === "number") {
+    useSessionStore.getState().setGalleryHeight(appState.galleryHeight);
+  }
+  if (typeof appState.thumbColWidth === "number") {
+    useSessionStore.getState().setThumbColWidth(appState.thumbColWidth);
+  }
 
   // Restore session paths.
   const session = useSessionStore.getState();

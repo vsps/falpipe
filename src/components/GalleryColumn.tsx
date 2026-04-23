@@ -6,6 +6,7 @@ import { basename } from "../lib/paths";
 
 type Props = {
   column: GalleryColumnData;
+  width: number;
   onFolderDelete: () => void;
   onImageAction: (action: ImageAction, imagePath: string) => void;
 };
@@ -19,7 +20,7 @@ export type ImageAction =
   | "trace"
   | "delete";
 
-export function GalleryColumn({ column, onFolderDelete, onImageAction }: Props) {
+export function GalleryColumn({ column, width, onFolderDelete, onImageAction }: Props) {
   const { targetVersion, setTargetVersion, selectedImagePath, traceActive } = useSessionStore();
 
   const isTarget = targetVersion === column.version;
@@ -30,7 +31,10 @@ export function GalleryColumn({ column, onFolderDelete, onImageAction }: Props) 
     : "bg-surface text-text hover:bg-panel";
 
   return (
-    <div className="bg-surface p-[6px] flex flex-col gap-[5px] w-[180px] shrink-0 h-full min-h-0">
+    <div
+      className="bg-surface p-[6px] flex flex-col gap-[5px] shrink-0 h-full min-h-0"
+      style={{ width: `${width}px` }}
+    >
       <div
         className={`flex items-center h-[25px] px-[5px] text-sm cursor-pointer shrink-0 ${headerClass}`}
         onClick={() => !column.isSrc && setTargetVersion(column.version)}

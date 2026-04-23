@@ -25,6 +25,9 @@ type State = {
   shotHistory: PromptHistoryChannel;
 
   traceActive: { imagePath: string; traceSet: Set<string> } | null;
+
+  galleryHeight: number;
+  thumbColWidth: number;
 };
 
 type Actions = {
@@ -45,7 +48,17 @@ type Actions = {
 
   hydrateSequenceSidecar: (sidecar: SequenceSidecar | null) => void;
   hydrateShotSidecar: (sidecar: ShotSidecar | null) => void;
+
+  setGalleryHeight: (n: number) => void;
+  setThumbColWidth: (n: number) => void;
 };
+
+const GALLERY_H_MIN = 120;
+const GALLERY_H_MAX = 1200;
+const THUMB_W_MIN = 120;
+const THUMB_W_MAX = 400;
+const clamp = (n: number, lo: number, hi: number) =>
+  Math.max(lo, Math.min(hi, Math.round(n)));
 
 const emptyChannel = (): PromptHistoryChannel => ({ entries: [], cursor: 0 });
 
@@ -70,6 +83,9 @@ export const useSessionStore = create<State & Actions>((set, get) => ({
   shotHistory: emptyChannel(),
 
   traceActive: null,
+
+  galleryHeight: 400,
+  thumbColWidth: 180,
 
   async setProject(projectPath) {
     // Rust's list_dirs returns forward-slash paths. Normalize the incoming path
@@ -202,5 +218,12 @@ export const useSessionStore = create<State & Actions>((set, get) => ({
   hydrateShotSidecar(sidecar) {
     const entries = sidecar?.promptHistory ?? [];
     set({ shotHistory: { entries, cursor: entries.length } });
+  },
+
+  setGalleryHeight(n) {
+    set({ galleryHeight: clamp(n, GALLERY_H_MIN, GALLERY_H_MAX) });
+  },
+  setThumbColWidth(n) {
+    set({ thumbColWidth: clamp(n, THUMB_W_MIN, THUMB_W_MAX) });
   },
 }));
