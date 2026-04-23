@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { getVersion } from "@tauri-apps/api/app";
+import { getCurrentWindow } from "@tauri-apps/api/window";
 import { bootstrap } from "./lib/bootstrap";
 import { SessionBar } from "./components/SessionBar";
 import { ModelSettingsColumn } from "./components/ModelSettingsColumn";
@@ -20,6 +22,7 @@ export default function App() {
   const [ready, setReady] = useState(false);
   const [bootError, setBootError] = useState<string | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [version, setVersion] = useState<string>("");
   const traceActive = useSessionStore((s) => s.traceActive);
   const setTrace = useSessionStore((s) => s.setTrace);
   const galleryHeight = useSessionStore((s) => s.galleryHeight);
@@ -27,6 +30,15 @@ export default function App() {
 
   useEffect(() => {
     let dispose: (() => void) | null = null;
+    // Pull version from the Tauri bundle manifest and sync it to the title bar.
+    getVersion()
+      .then((v) => {
+        setVersion(v);
+        return getCurrentWindow().setTitle(`falPipe ${v}`);
+      })
+      .catch(() => {
+        /* non-fatal — title/version just won't update */
+      });
     bootstrap()
       .then((d) => {
         dispose = d;
@@ -83,7 +95,7 @@ export default function App() {
       <StatusBar ready={ready} bootError={bootError} />
       <ErrorPopup />
       {settingsOpen && <SettingsDialog onClose={() => setSettingsOpen(false)} />}
-      <SplashScreen ready={ready} />
+      <SplashScreen ready={ready} version={version} />
     </div>
   );
 }
