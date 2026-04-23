@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import type { GalleryImage, ImageMetadata } from "../lib/types";
 import { fileSrc } from "../lib/assets";
 import { IconBtn } from "./IconBtn";
+import { PathContextMenu } from "./PathContextMenu";
 import { cmd } from "../lib/tauri";
 
 type Props = {
@@ -25,6 +26,13 @@ export function ImageZoomModal({
 }: Props) {
   const [fit, setFit] = useState<"fit" | "one">("fit");
   const [meta, setMeta] = useState<ImageMetadata | null>(null);
+  const [menuPos, setMenuPos] = useState<{ x: number; y: number } | null>(null);
+
+  const onCtx = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setMenuPos({ x: e.clientX, y: e.clientY });
+  };
 
   useEffect(() => {
     const esc = (e: KeyboardEvent) => {
@@ -68,6 +76,7 @@ export function ImageZoomModal({
             autoPlay
             className={fit === "fit" ? "max-h-full max-w-full" : ""}
             onClick={(e) => e.stopPropagation()}
+            onContextMenu={onCtx}
           />
         ) : (
           <img
@@ -79,6 +88,7 @@ export function ImageZoomModal({
               e.stopPropagation();
               setFit((f) => (f === "fit" ? "one" : "fit"));
             }}
+            onContextMenu={onCtx}
           />
         )}
       </div>
@@ -114,6 +124,22 @@ export function ImageZoomModal({
           <IconBtn name="close" size={24} title="Close (Esc)" onClick={onClose} />
         </div>
       </div>
+      {menuPos && (
+        <PathContextMenu
+          x={menuPos.x}
+          y={menuPos.y}
+          path={image.path}
+          onClose={() => setMenuPos(null)}
+          items={[
+            "copy_path",
+            "add_to_refs",
+            "copy_prompt",
+            "copy_settings",
+            "trace",
+            "delete",
+          ]}
+        />
+      )}
     </div>
   );
 }

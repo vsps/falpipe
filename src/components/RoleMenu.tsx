@@ -124,7 +124,7 @@ export function RoleMenu({ anchor, ref_, model, onAssign, onClose }: Props) {
             label={`+ New element (@Element${nextGroup})`}
             active={false}
             onClick={() =>
-              onAssign({ kind: "element", groupName: nextGroup, frontal: false })
+              onAssign({ kind: "element", groupName: nextGroup, frontal: true })
             }
           />
           {myElement && (

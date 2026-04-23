@@ -100,9 +100,17 @@ export const useGenerationStore = create<State & Actions>((set, get) => ({
   addRefs(paths) {
     set((s) => {
       const existing = new Set(s.refImages.map((r) => r.path));
-      const added = paths
-        .filter((p) => !existing.has(p))
-        .map<RefImage>((p) => ({ path: p, roleAssignment: null }));
+      const newPaths = paths.filter((p) => !existing.has(p));
+      if (newPaths.length === 0) return {} as Partial<State>;
+      // Auto-assign the first ref to "start" when the model supports it
+      // and no existing ref holds that role.
+      const modelHasStart = !!s.currentModel?.ref_roles?.some((r) => r.role === "start");
+      const startTaken = s.refImages.some((r) => r.roleAssignment?.kind === "start");
+      const shouldAutoStart = modelHasStart && !startTaken;
+      const added = newPaths.map<RefImage>((p, i) => ({
+        path: p,
+        roleAssignment: shouldAutoStart && i === 0 ? { kind: "start" } : null,
+      }));
       return { refImages: [...s.refImages, ...added] };
     });
   },

@@ -8,6 +8,7 @@ import { fileSrc } from "../lib/assets";
 import { basename } from "../lib/paths";
 import { pickFile, showMessage } from "../lib/dialog";
 import { cmd } from "../lib/tauri";
+import { performImageAction } from "../lib/actions";
 import type { RefImage, RoleAssignment } from "../lib/types";
 
 const IMAGE_EXTS = ["png", "jpg", "jpeg", "webp"];
@@ -17,7 +18,7 @@ function isImage(path: string): boolean {
   return !!ext && IMAGE_EXTS.includes(ext);
 }
 
-export function RefImagesColumn({ onZoom }: { onZoom?: (path: string) => void }) {
+export function RefImagesColumn() {
   const { currentModel, refImages, addRefs, removeRef, removeAllRefs, assignRole, reorderRefs } =
     useGenerationStore();
   const { shotPath } = useSessionStore();
@@ -152,7 +153,7 @@ export function RefImagesColumn({ onZoom }: { onZoom?: (path: string) => void })
               isDropTarget={dragState != null && dragState.overIdx === idx && dragState.fromIdx !== idx}
               onRemove={() => removeRef(r.path)}
               onOpenMenu={(anchor) => setMenu({ anchor, ref: r })}
-              onZoom={() => onZoom?.(r.path)}
+              onZoom={() => void performImageAction("zoom", r.path)}
               onHandlePointerDown={(pointerId, handleEl) => beginHandleDrag(idx, pointerId, handleEl)}
             />
           ))}

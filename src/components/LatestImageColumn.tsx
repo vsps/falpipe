@@ -1,6 +1,7 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useSessionStore } from "../stores/sessionStore";
 import { fileSrc } from "../lib/assets";
+import { PathContextMenu } from "./PathContextMenu";
 import type { GalleryImage, GalleryColumn } from "../lib/types";
 
 /**
@@ -14,6 +15,13 @@ export function LatestImageColumn() {
     () => pickImage(columns, selectedImagePath, targetVersion),
     [columns, selectedImagePath, targetVersion],
   );
+  const [menuPos, setMenuPos] = useState<{ x: number; y: number } | null>(null);
+
+  const onCtx = (e: React.MouseEvent) => {
+    if (!image) return;
+    e.preventDefault();
+    setMenuPos({ x: e.clientX, y: e.clientY });
+  };
 
   return (
     <div className="bg-surface p-[10px] text-text flex-1 min-w-0 flex flex-col gap-[8px] shrink">
@@ -36,6 +44,7 @@ export function LatestImageColumn() {
               src={fileSrc(image.path)}
               controls
               className="max-w-full max-h-full"
+              onContextMenu={onCtx}
             />
           ) : (
             <img
@@ -43,12 +52,21 @@ export function LatestImageColumn() {
               src={fileSrc(image.path)}
               alt={image.filename}
               className="max-w-full max-h-full object-contain"
+              onContextMenu={onCtx}
             />
           )
         ) : (
           <div className="text-xs text-dim">No image</div>
         )}
       </div>
+      {menuPos && image && (
+        <PathContextMenu
+          x={menuPos.x}
+          y={menuPos.y}
+          path={image.path}
+          onClose={() => setMenuPos(null)}
+        />
+      )}
     </div>
   );
 }

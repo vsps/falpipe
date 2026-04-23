@@ -19,6 +19,7 @@ type State = {
 
   columns: GalleryColumn[];
   selectedImagePath: string | null;
+  zoomImagePath: string | null;
   targetVersion: string | null;
 
   sequenceHistory: PromptHistoryChannel;
@@ -41,6 +42,7 @@ type Actions = {
   createNextVersion: () => Promise<string>;
 
   setSelectedImage: (path: string | null) => void;
+  setZoomImage: (path: string | null) => void;
   setTrace: (state: State["traceActive"]) => void;
 
   navigatePromptHistory: (scope: PromptScope, delta: number) => void;
@@ -77,6 +79,7 @@ export const useSessionStore = create<State & Actions>((set, get) => ({
 
   columns: [],
   selectedImagePath: null,
+  zoomImagePath: null,
   targetVersion: null,
 
   sequenceHistory: emptyChannel(),
@@ -183,6 +186,10 @@ export const useSessionStore = create<State & Actions>((set, get) => ({
 
   setSelectedImage(path) {
     set({ selectedImagePath: path });
+  },
+
+  setZoomImage(path) {
+    set({ zoomImagePath: path });
   },
 
   setTrace(state) {

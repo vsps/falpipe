@@ -1,6 +1,8 @@
+import { useState } from "react";
 import type { GalleryImage } from "../lib/types";
 import { IconBtn } from "./IconBtn";
 import { fileSrc } from "../lib/assets";
+import { PathContextMenu } from "./PathContextMenu";
 
 type Props = {
   image: GalleryImage;
@@ -29,6 +31,8 @@ export function Thumbnail({
   onDelete,
   traceActive,
 }: Props) {
+  const [menuPos, setMenuPos] = useState<{ x: number; y: number } | null>(null);
+
   if (hidden) return null;
   const srcUrl = image.isVideo ? (image.thumbPath ? fileSrc(image.thumbPath) : null) : fileSrc(image.path);
 
@@ -42,6 +46,11 @@ export function Thumbnail({
         e.stopPropagation();
         onSelect();
         onZoom();
+      }}
+      onContextMenu={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setMenuPos({ x: e.clientX, y: e.clientY });
       }}
       onMouseDown={(e) => e.stopPropagation()}
       title={image.filename}
@@ -90,6 +99,14 @@ export function Thumbnail({
       >
         <IconBtn name="delete" size={16} title="Delete" onClick={onDelete} />
       </div>
+      {menuPos && (
+        <PathContextMenu
+          x={menuPos.x}
+          y={menuPos.y}
+          path={image.path}
+          onClose={() => setMenuPos(null)}
+        />
+      )}
     </div>
   );
 }

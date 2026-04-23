@@ -4,6 +4,7 @@ import type { QueueStatus } from "@fal-ai/client";
 import { cmd } from "./tauri";
 import { basename, joinPath } from "./paths";
 import { fileSrc } from "./assets";
+import { confirmAction } from "./dialog";
 import { pushLog } from "../stores/logStore";
 import type {
   Config,
@@ -21,6 +22,25 @@ import { useSessionStore } from "../stores/sessionStore";
 let currentController: AbortController | null = null;
 
 type UploadedRef = { ref: RefImage; url: string };
+
+/** Preflight ref-role check. Returns false when the user cancels. */
+async function preflightRefs(node: ModelNode, refs: RefImage[]): Promise<boolean> {
+  const roles = node.ref_roles ?? [];
+  const wantsStart = roles.some((r) => r.role === "start");
+  const wantsElement = roles.some((r) => r.role === "element");
+  if (!wantsStart && !wantsElement) return true;
+  const hasStart = refs.some((r) => r.roleAssignment?.kind === "start");
+  const hasElement = refs.some((r) => r.roleAssignment?.kind === "element");
+  if (hasStart || hasElement) return true;
+  const parts: string[] = [];
+  if (wantsStart) parts.push("a start frame");
+  if (wantsElement) parts.push("element references");
+  const needs = parts.join(" and/or ");
+  return await confirmAction(
+    `No ${needs} assigned. The request will likely fail.\n\nProceed anyway?`,
+    { title: "Missing reference role", kind: "warning" },
+  );
+}
 
 export async function runGeneration(): Promise<void> {
   const gen = useGenerationStore.getState();
@@ -46,6 +66,11 @@ export async function runGeneration(): Promise<void> {
     gen.setError("Both prompts are empty.");
     return;
   }
+
+  // Preflight: if the model expects a start frame and/or element references,
+  // warn when none of the loaded refs carry either role. Lets the user proceed
+  // anyway (some endpoints accept empty refs even if a role is advertised).
+  if (!(await preflightRefs(node, gen.refImages))) return;
 
   const config = (await cmd.config_load().catch(() => null)) as Config | null;
   const testMode = !!config?.testMode && !!config?.testImagePath;

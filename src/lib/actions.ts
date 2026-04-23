@@ -2,6 +2,7 @@
 
 import { cmd } from "./tauri";
 import { basename } from "./paths";
+import { confirmAction, showMessage } from "./dialog";
 import { useGenerationStore } from "../stores/generationStore";
 import { useModelsStore } from "../stores/modelsStore";
 import { useSessionStore } from "../stores/sessionStore";
@@ -106,6 +107,103 @@ export function roleAssignmentLabel(a: RoleAssignment | null): string {
   if (!a) return "";
   if (a.kind === "element") return `@${a.groupName}${a.frontal ? " ★" : ""}`;
   return a.kind;
+}
+
+// ---------- Unified image action dispatcher ----------
+
+export type ImageAction =
+  | "zoom"
+  | "select"
+  | "add_to_refs"
+  | "copy_path"
+  | "copy_settings"
+  | "copy_prompt"
+  | "trace"
+  | "delete";
+
+/** Single entry point for any image op invoked from thumbs, preview, or zoom. */
+export async function performImageAction(action: ImageAction, path: string): Promise<void> {
+  const session = useSessionStore.getState();
+  switch (action) {
+    case "select":
+      session.setSelectedImage(path);
+      return;
+    case "zoom":
+      session.setSelectedImage(path);
+      session.setZoomImage(path);
+      return;
+    case "copy_path":
+      try {
+        await navigator.clipboard.writeText(path);
+      } catch {
+        /* ignore */
+      }
+      return;
+    case "add_to_refs":
+      try {
+        await addImageToRefs(path);
+      } catch (e) {
+        await showMessage(String(e), { kind: "error" });
+      }
+      return;
+    case "copy_settings": {
+      const meta = (await cmd.image_metadata_read(path).catch(() => null)) as
+        | ImageMetadata
+        | null;
+      if (!meta) {
+        await showMessage("No metadata for this image", { kind: "warning" });
+        return;
+      }
+      const { skippedRefs } = await copySettingsFromMetadata(meta);
+      if (skippedRefs) {
+        await showMessage(`Loaded. ${skippedRefs} ref(s) skipped (files missing).`, {
+          kind: "info",
+        });
+      }
+      return;
+    }
+    case "copy_prompt": {
+      const meta = (await cmd.image_metadata_read(path).catch(() => null)) as
+        | ImageMetadata
+        | null;
+      if (!meta) {
+        await showMessage("No metadata for this image", { kind: "warning" });
+        return;
+      }
+      copyPromptFromMetadata(meta);
+      return;
+    }
+    case "trace": {
+      const t = session.traceActive;
+      if (t?.imagePath === path) {
+        session.setTrace(null);
+        return;
+      }
+      const set = await computeTraceSet(path);
+      session.setTrace({ imagePath: path, traceSet: set });
+      return;
+    }
+    case "delete": {
+      const img = session.columns
+        .flatMap((c) => c.images)
+        .find((i) => i.path === path);
+      const ok = await confirmAction(`Delete ${img?.filename ?? basename(path)}?`, {
+        title: "Delete image",
+        kind: "warning",
+      });
+      if (!ok) return;
+      try {
+        await cmd.image_delete(path);
+        await session.rescanShot();
+        if (useSessionStore.getState().zoomImagePath === path) {
+          useSessionStore.getState().setZoomImage(null);
+        }
+      } catch (e) {
+        await showMessage(String(e), { kind: "error" });
+      }
+      return;
+    }
+  }
 }
 
 export { basename, type FsExistsLike };

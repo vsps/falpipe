@@ -1,4 +1,5 @@
 import type { GalleryColumn as GalleryColumnData } from "../lib/types";
+import type { ImageAction } from "../lib/actions";
 import { IconBtn } from "./IconBtn";
 import { Thumbnail } from "./Thumbnail";
 import { useSessionStore } from "../stores/sessionStore";
@@ -10,15 +11,6 @@ type Props = {
   onFolderDelete: () => void;
   onImageAction: (action: ImageAction, imagePath: string) => void;
 };
-
-export type ImageAction =
-  | "zoom"
-  | "select"
-  | "add_to_refs"
-  | "copy_settings"
-  | "copy_prompt"
-  | "trace"
-  | "delete";
 
 export function GalleryColumn({ column, width, onFolderDelete, onImageAction }: Props) {
   const { targetVersion, setTargetVersion, selectedImagePath, traceActive } = useSessionStore();
