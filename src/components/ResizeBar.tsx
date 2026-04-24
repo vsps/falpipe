@@ -26,7 +26,7 @@ export function ResizeBar({ orientation, value, onChange, grow }: Props) {
     <div
       role="separator"
       aria-orientation={horizontal ? "horizontal" : "vertical"}
-      className={`shrink-0 bg-panel hover:bg-accent transition-colors ${
+      className={`shrink-0 accent-hover ${
         horizontal ? "h-[5px] w-full cursor-row-resize" : "w-[5px] h-full cursor-col-resize"
       }`}
       onPointerDown={(e) => {

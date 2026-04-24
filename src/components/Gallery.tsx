@@ -128,7 +128,7 @@ export function Gallery() {
   }
 
   return (
-    <div className="flex flex-1 min-h-0 gap-gallery-surface bg-panel">
+    <div className="flex flex-1 min-h-0 gap-gallery-surface bg-gallery-surface">
       {traceActive && (
         <div className="absolute top-[80px] right-2 z-10 bg-warn/90 text-text px-2 py-1 text-xs font-mono">
           tracing · {traceActive.traceSet.size} images ·{" "}
@@ -153,7 +153,7 @@ export function Gallery() {
             ))}
             {session.shotPath && (
               <button
-                className="bg-surface px-3 py-2 flex items-center justify-center shrink-0"
+                className="accent-hover px-3 py-2 flex items-center justify-center shrink-0"
                 title="Add new version"
                 onClick={onAddNewVersion}
               >

@@ -2,19 +2,25 @@
 
 @theme {
   /* 5 user-editable tokens (exposed in Settings; persisted to config.colors). */
-  --color-bg: #ffffff;
-  --color-panel: #cccccc;
-  --color-surface: #bbbbbb;
+  --color-bg: #cccccc;
+  --color-panel: #bbbbbb;
+  --color-surface: #aaaaaa;
   --color-text: #111111;
-  --color-accent: #e94560;
+  --color-accent: #ee88aa;
+  --color-accent-dim: #eeeeee;
 
   /* Derived / semantic / non-editable. */
-  --color-inset: #aaaaaa; /* inner input/textarea tone, one step darker than surface */
+  --color-inset: #999999; /* inner input/textarea tone, one step darker than surface */
   --color-dim: #666666;
   --color-edge: #8a8a8a;
   --color-ok: #4ade80;
   --color-warn: #fbbf24;
   --color-bad: #f87171;
+
+
+  /* Gallery backdrop: the strip behind the thumbnail columns + "+" button.
+     Defaults to panel tone; tune independently here. */
+  --color-gallery-surface: #cccccc;
 
   --font-sans: "Google Sans Code", "Consolas", "Menlo", "Courier New", monospace;
   --font-mono: "Google Sans Code", "Consolas", "Menlo", "Courier New", monospace;
@@ -25,12 +31,12 @@
 
   /* Layout spacing tokens — edit once, propagates everywhere.
      Usage: p-prompt-column, gap-gallery-column-gap, etc. */
-  --spacing-prompt-surface: 2px;        /* gap between prompt columns (+ app shell pad) */
+  --spacing-prompt-surface: 5px;        /* gap between prompt columns (+ app shell pad) */
   --spacing-prompt-column: 5px;        /* padding inside each prompt column */
   --spacing-prompt-column-gap: 8px;     /* vertical gap inside a prompt column */
   --spacing-prompt-panel: 10px;          /* padding of the inset panel (textarea / grid / preview) */
 
-  --spacing-gallery-surface: 2px;       /* gap between gallery columns */
+  --spacing-gallery-surface: 5px;       /* gap between gallery columns */
   --spacing-gallery-column: 5px;        /* padding inside a gallery column */
   --spacing-gallery-column-gap: 2px;    /* gap between thumbs within a column */
 }
@@ -101,4 +107,15 @@ textarea {
 }
 .thin-scroll::-webkit-scrollbar-track {
   background: transparent;
+}
+
+/* Shared styling for clickable chrome — column headers, resize bars, the
+   add-version button. Idle = desaturated accent, hover = full accent. Apply
+   to anything that should read as "clickable and themed with the accent". */
+.accent-hover {
+  background-color: var(--color-accent-dim);
+  transition: background-color 150ms ease;
+}
+.accent-hover:hover {
+  background-color: var(--color-accent);
 }

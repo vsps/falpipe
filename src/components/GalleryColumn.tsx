@@ -20,7 +20,7 @@ export function GalleryColumn({ column, width, onFolderDelete, onImageAction }: 
     ? "bg-accent text-text"
     : column.isSrc
     ? "bg-surface text-text"
-    : "bg-surface text-text hover:bg-panel";
+    : "accent-hover text-text";
 
   return (
     <div
