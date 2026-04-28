@@ -42,6 +42,9 @@ pnpm tauri dev       # run
 pnpm tauri build     # produce an installer in src-tauri/target/release/bundle
 ```
 
+### A test build can be found here (WINDOWS ONLY): https://github.com/vsps/falpipe.ai/releases
+
+
 ## Configure
 
 On first launch the app creates `%APPDATA%\falPipe\` (Windows) or the equivalent config dir on other OSes with:
