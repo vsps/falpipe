@@ -190,6 +190,7 @@ export function ImageZoomModal({
             "copy_prompt",
             "copy_settings",
             "trace",
+            "refresh",
             "delete",
           ]}
         />

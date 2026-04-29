@@ -20,6 +20,7 @@ const DEFAULT_ITEMS: AvailableAction[] = [
   "copy_settings",
   "trace",
   "zoom",
+  "refresh",
   "delete",
 ];
 
@@ -31,6 +32,7 @@ const LABELS: Record<AvailableAction, string> = {
   copy_settings: "Copy settings",
   trace: "Trace origins",
   zoom: "Zoom",
+  refresh: "Refresh",
   delete: "Delete",
 };
 

@@ -32,6 +32,9 @@ async function preflightRefs(node: ModelNode, refs: RefImage[]): Promise<boolean
   const hasStart = refs.some((r) => r.roleAssignment?.kind === "start");
   const hasElement = refs.some((r) => r.roleAssignment?.kind === "element");
   if (hasStart || hasElement) return true;
+  // Auto-element fallback in buildArgs covers this case — unassigned refs
+  // on an element-supporting model are promoted to @Element groups at submit.
+  if (wantsElement && refs.length > 0) return true;
   const parts: string[] = [];
   if (wantsStart) parts.push("a start frame");
   if (wantsElement) parts.push("element references");
@@ -396,6 +399,22 @@ export function buildArgs(
       }
       const key = a.kind === "element" ? `element:${a.groupName}` : a.kind;
       (bucket[key] ??= []).push(r);
+    }
+
+    // Auto-element fallback: if the model supports "element" AND the user
+    // assigned no roles to anything, promote each unassigned ref to its own
+    // element group. Lets Kling 3 ref2vid accept "just these images" without
+    // forcing a role click for every thumb.
+    const hasElementRole = node.ref_roles.some((r) => r.role === "element");
+    if (
+      hasElementRole &&
+      Object.keys(bucket).length === 0 &&
+      unassigned.length > 0
+    ) {
+      unassigned.forEach((u, i) => {
+        bucket[`element:${i + 1}`] = [u];
+      });
+      unassigned.length = 0;
     }
 
     let sourceConsumed = false;

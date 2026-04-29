@@ -120,6 +120,7 @@ export type ImageAction =
   | "copy_settings"
   | "copy_prompt"
   | "trace"
+  | "refresh"
   | "delete";
 
 const VIDEO_EXTS = new Set(["mp4", "webm", "mov", "mkv", "m4v", "avi"]);
@@ -212,6 +213,13 @@ export async function performImageAction(action: ImageAction, path: string): Pro
       copyPromptFromMetadata(meta);
       return;
     }
+    case "refresh":
+      try {
+        await session.rescanShot();
+      } catch (e) {
+        await showMessage(String(e), { kind: "error" });
+      }
+      return;
     case "trace": {
       const t = session.traceActive;
       if (t?.imagePath === path) {
