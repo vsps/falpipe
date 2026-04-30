@@ -36,7 +36,6 @@ pub fn run() {
             commands::metadata::image_delete,
             commands::metadata::column_delete,
             commands::download::download_to_path,
-            commands::media::test_mode_hue_shift,
             commands::media::video_thumbnail_extract,
         ])
         .run(tauri::generate_context!())

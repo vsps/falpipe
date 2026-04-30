@@ -101,15 +101,13 @@ pub struct Config {
     #[serde(default)]
     pub last_model: String,
     #[serde(default)]
-    pub test_mode: bool,
-    #[serde(default)]
-    pub test_image_path: String,
-    #[serde(default)]
     pub ffmpeg_path: String,
     #[serde(default = "default_max_concurrent_jobs")]
     pub max_concurrent_jobs: u32,
     #[serde(default = "default_src_scope")]
     pub src_scope: String,
+    #[serde(skip_serializing_if = "Option::is_none", default)]
+    pub filename_template: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none", default)]
     pub colors: Option<ColorOverrides>,
 }
@@ -125,11 +123,10 @@ impl Default for Config {
             last_sequence: String::new(),
             last_shot: String::new(),
             last_model: String::new(),
-            test_mode: false,
-            test_image_path: String::new(),
             ffmpeg_path: String::new(),
             max_concurrent_jobs: default_max_concurrent_jobs(),
             src_scope: default_src_scope(),
+            filename_template: None,
             colors: None,
         }
     }

@@ -1,5 +1,5 @@
 import { cmd } from "./tauri";
-import { basename, joinPath } from "./paths";
+import { basename, dirname, joinPath } from "./paths";
 import { fileSrc } from "./assets";
 import { confirmAction } from "./dialog";
 import { pushLog } from "../stores/logStore";
@@ -49,9 +49,8 @@ type JobSpec = {
   iterations: number;
   shotPath: string;
   targetVersion: string;
-  testMode: boolean;
-  testImagePath: string;
   ffmpegPath: string;
+  filenameTemplate: string;
 };
 
 /** Preflight ref-role check. Returns false when the user cancels. */
@@ -110,17 +109,15 @@ export async function enqueueGeneration(): Promise<void> {
   if (!(await preflightRefs(node, gen.refImages))) return;
 
   const config = (await cmd.config_load().catch(() => null)) as Config | null;
-  const testMode = !!config?.testMode && !!config?.testImagePath;
   const ffmpegPath = config?.ffmpegPath ?? "";
+  const filenameTemplate = config?.filenameTemplate ?? "";
   cachedMaxConcurrent = Math.max(1, config?.maxConcurrentJobs ?? 3);
 
-  if (!testMode) {
-    try {
-      await getProvider(node.provider).prepare();
-    } catch (e) {
-      gen.setError(e instanceof Error ? e.message : String(e));
-      return;
-    }
+  try {
+    await getProvider(node.provider).prepare();
+  } catch (e) {
+    gen.setError(e instanceof Error ? e.message : String(e));
+    return;
   }
 
   // Resolve target version up front so the job is bound to a concrete (shot,
@@ -149,9 +146,8 @@ export async function enqueueGeneration(): Promise<void> {
     iterations,
     shotPath: session.shotPath,
     targetVersion,
-    testMode,
-    testImagePath: config?.testImagePath ?? "",
     ffmpegPath,
+    filenameTemplate,
   };
   jobSpecs.set(id, spec);
 
@@ -169,32 +165,30 @@ export async function enqueueGeneration(): Promise<void> {
   gen.addJob(job);
   gen.setError(null);
 
-  pushLog("INFO", testMode ? "Test-mode generation queued" : `Queued: ${node.name}`, tag);
+  pushLog("INFO", `Queued: ${node.name}`, tag);
 
   // Append prompt histories synchronously at submit time so the navigation UI
   // reflects the latest prompts even before the job is dispatched.
-  if (!testMode) {
-    if (session.sequencePath && spec.sequencePrompt.length > 0) {
-      try {
-        const sidecar = await cmd.sequence_prompt_append(session.sequencePath, spec.sequencePrompt);
-        useSessionStore.getState().hydrateSequenceSidecar(sidecar);
-      } catch {
-        /* swallow — history append failures are non-fatal */
-      }
+  if (session.sequencePath && spec.sequencePrompt.length > 0) {
+    try {
+      const sidecar = await cmd.sequence_prompt_append(session.sequencePath, spec.sequencePrompt);
+      useSessionStore.getState().hydrateSequenceSidecar(sidecar);
+    } catch {
+      /* swallow — history append failures are non-fatal */
     }
-    let lastShotSidecar = null;
-    for (const p of spec.shotPrompts) {
-      const trimmed = p.trim();
-      if (trimmed.length === 0) continue;
-      try {
-        lastShotSidecar = await cmd.shot_prompt_append(spec.shotPath, trimmed);
-      } catch {
-        /* swallow */
-      }
+  }
+  let lastShotSidecar = null;
+  for (const p of spec.shotPrompts) {
+    const trimmed = p.trim();
+    if (trimmed.length === 0) continue;
+    try {
+      lastShotSidecar = await cmd.shot_prompt_append(spec.shotPath, trimmed);
+    } catch {
+      /* swallow */
     }
-    if (lastShotSidecar) {
-      useSessionStore.getState().hydrateShotSidecar(lastShotSidecar);
-    }
+  }
+  if (lastShotSidecar) {
+    useSessionStore.getState().hydrateShotSidecar(lastShotSidecar);
   }
 
   void pumpQueue();
@@ -274,21 +268,9 @@ async function runJob(spec: JobSpec): Promise<void> {
   abortControllers.set(spec.id, controller);
 
   gen.updateJob(spec.id, { status: "uploading", progressMessage: "Uploading references…" });
-  pushLog("INFO", spec.testMode ? "Test-mode start" : `Generating with ${spec.node.name}`, tag);
+  pushLog("INFO", `Generating with ${spec.node.name}`, tag);
 
   try {
-    if (spec.testMode) {
-      await runTestMode(spec, controller);
-      if (!controller.signal.aborted) {
-        gen.updateJob(spec.id, {
-          status: "done",
-          progressMessage: `Test-mode generated ${spec.iterations} file(s)`,
-        });
-        pushLog("SUCCESS", `Test-mode generated ${spec.iterations} file(s)`, tag);
-      }
-      return;
-    }
-
     const provider = getProvider(spec.node.provider);
     await provider.prepare();
 
@@ -320,12 +302,14 @@ async function runJob(spec: JobSpec): Promise<void> {
         shotPrompt: spec.shotPrompt,
         settings: spec.settings,
         refs: uploaded,
+        shotPath: spec.shotPath,
         versionDir,
         targetVersion: spec.targetVersion,
         iterationBase: 1,
         iterationTotal: spec.iterations,
         expandToIterations: true,
         ffmpegPath: spec.ffmpegPath,
+        filenameTemplate: spec.filenameTemplate,
       });
       totalOutputs.push(...outs);
     } else {
@@ -350,12 +334,14 @@ async function runJob(spec: JobSpec): Promise<void> {
           shotPrompt: spec.shotPrompt,
           settings: spec.settings,
           refs: uploaded,
+          shotPath: spec.shotPath,
           versionDir,
           targetVersion: spec.targetVersion,
           iterationBase: k,
           iterationTotal: spec.iterations,
           expandToIterations: false,
           ffmpegPath: spec.ffmpegPath,
+          filenameTemplate: spec.filenameTemplate,
         });
         totalOutputs.push(...outs);
         // Rescan only when the freshly-written shot is what the user is viewing;
@@ -395,50 +381,6 @@ async function runJob(spec: JobSpec): Promise<void> {
     jobSpecs.delete(spec.id);
     schedulePrune(spec.id);
     void pumpQueue();
-  }
-}
-
-// ---------- Test mode ----------
-
-async function runTestMode(spec: JobSpec, controller: AbortController) {
-  const gen = useGenerationStore.getState();
-  const versionDir = joinPath(spec.shotPath, spec.targetVersion);
-  for (let k = 1; k <= spec.iterations; k++) {
-    if (controller.signal.aborted) break;
-    gen.updateJob(spec.id, {
-      status: "running",
-      currentIteration: k,
-      progressMessage: `Test mode (${k}/${spec.iterations})…`,
-    });
-    const ts = tsNow();
-    const filename = `${spec.targetVersion}_${ts}_001.png`;
-    const target = joinPath(versionDir, filename);
-    const deg = Math.floor(Math.random() * 360);
-    await cmd.test_mode_hue_shift(spec.testImagePath, target, deg);
-    const meta = {
-      model: "Test Mode",
-      modelId: "test-mode",
-      endpoint: "none",
-      sequencePrompt: spec.sequencePrompt,
-      shotPrompt: spec.shotPrompt,
-      combinedPrompt:
-        [spec.sequencePrompt, spec.shotPrompt]
-          .map((s) => s.trim())
-          .filter((s) => s.length > 0)
-          .join("\n\n"),
-      settings: spec.settings,
-      refs: spec.refs.map((r) => ({ path: r.path, roleAssignment: r.roleAssignment })),
-      iterationIndex: k,
-      iterationTotal: spec.iterations > 1 ? spec.iterations : undefined,
-      timestamp: new Date().toISOString(),
-      providerResponse: null,
-      hueShift: deg,
-      sourceImage: spec.testImagePath,
-    };
-    await cmd.image_metadata_write(target, meta as unknown as ImageMetadata);
-    if (useSessionStore.getState().shotPath === spec.shotPath) {
-      await useSessionStore.getState().rescanShot();
-    }
   }
 }
 
@@ -640,6 +582,8 @@ function buildElements(
 
 // ---------- Download + sidecar ----------
 
+const DEFAULT_FILENAME_TEMPLATE = "<date>_<sequence>_<shot>_<model>_<version>";
+
 type DownloadCtx = {
   out: ProviderOutput;
   node: ModelNode;
@@ -647,23 +591,25 @@ type DownloadCtx = {
   shotPrompt: string;
   settings: Record<string, unknown>;
   refs: UploadedRef[];
+  shotPath: string;
   versionDir: string;
   targetVersion: string;
   iterationBase: number;
   iterationTotal: number;
   expandToIterations: boolean;
   ffmpegPath: string;
+  filenameTemplate: string;
 };
 
 async function downloadAndWrite(ctx: DownloadCtx): Promise<string[]> {
   const written: string[] = [];
-  const ts = tsNow();
   const files = ctx.out.files;
+  const multipleFiles = files.length > 1;
 
   const firstVideo = files.find((f) => f.isVideo);
   if (firstVideo) {
     const ext = extFromUrl(firstVideo.url) ?? "mp4";
-    const filename = `${ctx.targetVersion}_${ts}_001.${ext}`;
+    const filename = resolveFilename(ctx, 1, ext, false);
     const target = joinPath(ctx.versionDir, filename);
     await cmd.download_to_path(firstVideo.url, target);
     const thumbPath = target.replace(/\.[^.]+$/, ".thumb.png");
@@ -681,8 +627,7 @@ async function downloadAndWrite(ctx: DownloadCtx): Promise<string[]> {
     if (!f.url) continue;
     const declaredExt = String(ctx.settings["output_format"] ?? "").toLowerCase();
     const ext = declaredExt || extFromUrl(f.url) || "png";
-    const idx = i + 1;
-    const filename = `${ctx.targetVersion}_${ts}_${String(idx).padStart(3, "0")}.${ext}`;
+    const filename = resolveFilename(ctx, i + 1, ext, multipleFiles);
     const target = joinPath(ctx.versionDir, filename);
     await cmd.download_to_path(f.url, target);
     const iterIdx = ctx.expandToIterations
@@ -726,21 +671,54 @@ function buildMetadataRecord(ctx: DownloadCtx, iterationIndex: number) {
   };
 }
 
-function tsNow(): string {
-  const d = new Date();
-  const p = (n: number) => String(n).padStart(2, "0");
-  const ms = String(d.getMilliseconds()).padStart(3, "0");
-  // Millisecond suffix prevents same-second filename collisions when two
-  // concurrent jobs write to the same versionDir at once.
-  return (
-    `${d.getFullYear()}` +
-    `${p(d.getMonth() + 1)}` +
-    `${p(d.getDate())}` +
-    `_${p(d.getHours())}` +
-    `${p(d.getMinutes())}` +
-    `${p(d.getSeconds())}` +
-    `_${ms}`
-  );
+// Sanitize a string for use in a filename: collapse unsafe chars to underscore.
+function safeName(s: string): string {
+  return s.replace(/[<>:"/\\|?*\s]+/g, "_").replace(/^_+|_+$/g, "") || "_";
+}
+
+function resolveFilename(
+  ctx: DownloadCtx,
+  idx: number,
+  ext: string,
+  appendIter: boolean,
+): string {
+  const tpl = ctx.filenameTemplate || DEFAULT_FILENAME_TEMPLATE;
+  const now = new Date();
+  const p2 = (n: number) => String(n).padStart(2, "0");
+  const ms = String(now.getMilliseconds()).padStart(3, "0");
+
+  const shotName = basename(ctx.shotPath);
+  const seqName = basename(dirname(ctx.shotPath));
+  const seed = ctx.settings["seed"];
+  const seedToken = seed !== undefined && seed !== -1 ? String(seed) : "rnd";
+
+  const promptToken = [ctx.sequencePrompt, ctx.shotPrompt]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "")
+    .slice(0, 20) || "noprompt";
+
+  const hasIter = tpl.includes("<iter>");
+  let base = tpl
+    .replace(/<date>/g, `${now.getFullYear()}${p2(now.getMonth() + 1)}${p2(now.getDate())}`)
+    .replace(/<time>/g, `${p2(now.getHours())}${p2(now.getMinutes())}${p2(now.getSeconds())}_${ms}`)
+    .replace(/<sequence>/g, safeName(seqName))
+    .replace(/<shot>/g, safeName(shotName))
+    .replace(/<model>/g, safeName(ctx.node.name))
+    .replace(/<version>/g, safeName(ctx.targetVersion))
+    .replace(/<prompt>/g, promptToken)
+    .replace(/<iter>/g, String(idx).padStart(3, "0"))
+    .replace(/<seed>/g, seedToken)
+    .replace(/<provider>/g, ctx.node.provider ?? "fal");
+
+  // When template has no <iter> but we have multiple outputs, append index to avoid collisions.
+  if (!hasIter && appendIter) {
+    base = `${base}_${String(idx).padStart(3, "0")}`;
+  }
+
+  return `${base}.${ext}`;
 }
 
 function extFromUrl(url: string): string | null {

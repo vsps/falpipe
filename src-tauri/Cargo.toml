@@ -31,4 +31,3 @@ dirs = "5"
 anyhow = "1"
 thiserror = "1"
 futures-util = "0.3"
-image = { version = "0.25", default-features = false, features = ["png", "jpeg", "webp"] }

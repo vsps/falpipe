@@ -67,8 +67,6 @@ export const cmd = {
   download_to_path: (url: string, target: string): Promise<void> =>
     rawInvoke("download_to_path", { url, target }),
 
-  test_mode_hue_shift: (srcPath: string, destPath: string, hueDeg: number): Promise<void> =>
-    rawInvoke("test_mode_hue_shift", { srcPath, destPath, hueDeg }),
   video_thumbnail_extract: (
     videoPath: string,
     thumbPath: string,

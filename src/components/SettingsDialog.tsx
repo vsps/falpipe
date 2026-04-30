@@ -9,17 +9,18 @@ type Props = {
   onClose: () => void;
 };
 
+const FILENAME_TEMPLATE_DEFAULT = "<date>_<sequence>_<shot>_<model>_<version>";
+
 const DEFAULT: Config = {
   windowBounds: { width: 1600, height: 1000 },
   projectPath: "",
   lastSequence: "",
   lastShot: "",
   lastModel: "",
-  testMode: false,
-  testImagePath: "",
   ffmpegPath: "",
   maxConcurrentJobs: 3,
   srcScope: "shot",
+  filenameTemplate: undefined,
   colors: undefined,
 };
 
@@ -74,13 +75,6 @@ export function SettingsDialog({ onClose }: Props) {
     // Revert live-preview to the saved state.
     applyColors(originalColors);
     onClose();
-  }
-
-  async function browseTestImage() {
-    const paths = await pickFile("Pick test image", {
-      extensions: ["png", "jpg", "jpeg", "webp"],
-    });
-    if (paths?.[0]) setConfig((c) => ({ ...c, testImagePath: paths[0] }));
   }
 
   async function browseFfmpeg() {
@@ -167,36 +161,6 @@ export function SettingsDialog({ onClose }: Props) {
             </div>
           </Field>
 
-          <Field label="Test mode">
-            <label className="flex items-center gap-2 text-xs">
-              <input
-                type="checkbox"
-                checked={config.testMode}
-                onChange={(e) =>
-                  setConfig((c) => ({ ...c, testMode: e.currentTarget.checked }))
-                }
-                className="accent-accent"
-              />
-              Hue-shift the test image instead of calling fal.ai.
-            </label>
-          </Field>
-
-          <Field label="Test image path">
-            <div className="flex gap-1">
-              <input
-                type="text"
-                value={config.testImagePath}
-                onChange={(e) =>
-                  setConfig((c) => ({ ...c, testImagePath: e.currentTarget.value }))
-                }
-                className="flex-1 bg-bg px-2 py-1 text-xs font-mono"
-              />
-              <button className="px-2 bg-bg text-xs" onClick={browseTestImage}>
-                browse
-              </button>
-            </div>
-          </Field>
-
           <Field label="ffmpeg path (for video thumbnails)">
             <div className="flex gap-1">
               <input
@@ -260,6 +224,30 @@ export function SettingsDialog({ onClose }: Props) {
             </div>
             <div className="text-xs text-dim mt-1">
               Existing files are not moved when you switch. Flip back to see old files.
+            </div>
+          </Field>
+
+          <Field label="Filename template">
+            <div className="flex gap-1">
+              <input
+                type="text"
+                value={config.filenameTemplate ?? ""}
+                onChange={(e) =>
+                  setConfig((c) => ({ ...c, filenameTemplate: e.currentTarget.value || undefined }))
+                }
+                className="flex-1 bg-bg px-2 py-1 text-xs font-mono"
+                placeholder={FILENAME_TEMPLATE_DEFAULT}
+              />
+              <button
+                type="button"
+                className="px-2 bg-bg text-xs"
+                onClick={() => setConfig((c) => ({ ...c, filenameTemplate: undefined }))}
+              >
+                reset
+              </button>
+            </div>
+            <div className="text-xs text-dim mt-1">
+              Tokens: <code>&lt;date&gt;</code> <code>&lt;time&gt;</code> <code>&lt;sequence&gt;</code> <code>&lt;shot&gt;</code> <code>&lt;model&gt;</code> <code>&lt;version&gt;</code> <code>&lt;prompt&gt;</code> <code>&lt;iter&gt;</code> <code>&lt;seed&gt;</code> <code>&lt;provider&gt;</code>
             </div>
           </Field>
 

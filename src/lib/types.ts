@@ -148,13 +148,13 @@ export type Config = {
   lastSequence: string;
   lastShot: string;
   lastModel: string;
-  testMode: boolean;
-  testImagePath: string;
   ffmpegPath: string;
   /** Max number of submissions running in parallel; default 3. */
   maxConcurrentJobs?: number;
   /** Where SRC lives on disk: per shot (default) or per sequence. */
   srcScope?: "shot" | "sequence";
+  /** Output filename template. Tokens: <date> <time> <sequence> <shot> <model> <version> <prompt> <iter> <seed> <provider> */
+  filenameTemplate?: string;
   colors?: ColorOverrides;
 };
 
