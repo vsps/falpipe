@@ -1,0 +1,44 @@
+{
+  "provider": "replicate",
+  "family": "Topaz Upscale",
+  "category": "Replicate/Upscaling",
+  "nodes": [
+    {
+      "id": "replicate_topaz_upscale_image",
+      "name": "Topaz Upscale (image)",
+      "endpoint": "topazlabs/image-upscale",
+      "inputs": [
+        { "name": "image", "data_type": "IMAGE", "api_field": "image", "required": true }
+      ],
+      "outputs": [
+        { "name": "image", "data_type": "IMAGE", "api_field": "image" }
+      ],
+      "ref_roles": [
+        { "role": "source", "api_field": "image", "max": 1 }
+      ],
+      "parameters": [
+        { "name": "scale", "label": "Scale", "type": "int", "api_field": "scale", "default": 2, "min": 1, "max": 6 },
+        { "name": "model", "label": "Model", "type": "enum", "api_field": "model", "default": "Standard V2",
+          "options": ["Standard V2", "Low Resolution V2", "CGI", "High Fidelity V2", "Text Refine"] },
+        { "name": "output_format", "label": "Format", "type": "enum", "api_field": "output_format", "default": "png", "options": ["png", "jpg", "webp"] }
+      ]
+    },
+    {
+      "id": "replicate_topaz_upscale_video",
+      "name": "Topaz Upscale (video)",
+      "endpoint": "topazlabs/video-upscale",
+      "inputs": [
+        { "name": "video", "data_type": "VIDEO", "api_field": "video", "required": true }
+      ],
+      "outputs": [
+        { "name": "video", "data_type": "VIDEO", "api_field": "video" }
+      ],
+      "ref_roles": [
+        { "role": "source", "api_field": "video", "max": 1 }
+      ],
+      "parameters": [
+        { "name": "scale", "label": "Scale", "type": "int", "api_field": "scale", "default": 2, "min": 2, "max": 4 }
+      ]
+    }
+  ]
+}
