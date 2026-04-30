@@ -6,7 +6,8 @@
 
 # falPipe.ai
 
-A desktop GUI for [fal.ai](https://fal.ai) built around a **project / sequence / shot** file layout — meant for iterating on generative image & video shots as part of a larger production pipeline at speed while saving all media to disk.
+A desktop GUI for [fal.ai](https://fal.ai) and now [replicate](https://replicate.com).
+Built around a **project / sequence / shot** file layout — meant for iterating on generative image & video shots as part of a larger production pipeline at speed while saving all media to disk.
 
 This tool was designed as an antidote to overcomplicated node graphs which in many cases end up quite linear regardless. **Complexity is not a flex**.
 
@@ -39,6 +40,8 @@ ENTIRELY VIBE CODED SO GOOD LUCK EVERYBODY!
 - **Prompt history** — per-sequence and per-shot prompts are saved as sidecars and navigable with ←/→ arrows.
 - **Reference images with roles** — start frame, end frame, source, or `@ElementN` groups (with a "frontal" flag) that map onto Kling 3's nested element payload. Drag to reorder; drop OS files into the REF_IMAGES panel to add.
 - **Gallery** — every generation writes alongside its metadata; each shot has a SRC column (inputs) plus `v001/`, `v002/`, … version columns (outputs).
+- **Custom File Naming** - via a simple token setup.
+
 
 ## Install
 
@@ -80,6 +83,20 @@ On first launch the app creates `%APPDATA%\falPipe\` (Windows) or the equivalent
    - `start` / `end` — exclusive slots for img2vid / first-last-frame models.
    - `@ElementN` — Kling-style named references. First image in a group is the frontal by default (★); toggle the checkbox to promote another.
 6. Click **Generate**. The result lands in a new `vNNN/` column in the gallery and is saved with a sidecar containing the prompt, settings, and reference URLs used.
+
+
+## Some additional notes
+
+By default an SRC folder is created inside the sequence folder and can be seen from any shot. You have the option of creating per-shot SRC folders to keep references confined to individual shots instead.
+Adding images to the reference panel and then switching shots will resave those refs within the new shot if per shot references are enabled.
+
+The trace button is a quick way to see which images were used as references to create a particular generation.
+
+The cancel button cancels the entire queue, not just the active generation.
+
+Prompts get saved to a history and can be retreived through the \< and \> arrows in the prompt input header.
+
+
 
 ## License
 
